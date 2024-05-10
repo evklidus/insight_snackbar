@@ -23,22 +23,14 @@ class ExampleScreen extends StatelessWidget {
             ElevatedButton(
               child: const Text('Show Error Snackbar'),
               onPressed: () {
-                InsightSnackBar.showError(
-                  context,
-                  title: 'Error',
-                  message: 'Error Message',
-                );
+                InsightSnackBar.showError(context);
               },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               child: const Text('Show Successful Snackbar'),
               onPressed: () {
-                InsightSnackBar.showSuccessful(
-                  context,
-                  title: 'Successful',
-                  message: 'Successful Message',
-                );
+                InsightSnackBar.showSuccessful(context);
               },
             )
           ],

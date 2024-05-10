@@ -1,58 +1,56 @@
 library insight_snackbar;
 
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+final isNeedCupertino = Platform.isIOS || Platform.isMacOS;
 
 class InsightSnackBar {
   const InsightSnackBar._();
 
   static final List<OverlayEntry> _entries = [];
 
-  static void showError(
-    BuildContext context, {
-    IconData icon = Icons.error_rounded,
-    String? title,
-    String? message,
-  }) =>
-      _show(
-        context: context,
-        icon: icon,
-        iconColor: Theme.of(context).colorScheme.error,
-        title: title ?? 'Ошибка',
-        message: message ?? 'Попробовать снова',
-      );
-
   static void showSuccessful(
     BuildContext context, {
     IconData icon = Icons.done_rounded,
-    String? title,
-    String? message,
+    String text = 'Успешно',
   }) =>
       _show(
         context: context,
+        text: text,
         icon: icon,
-        title: title ?? 'Успешно',
-        message: message,
+      );
+
+  static void showError(
+    BuildContext context, {
+    IconData icon = Icons.error_rounded,
+    String text = 'Ошибка',
+  }) =>
+      _show(
+        context: context,
+        text: text,
+        icon: icon,
+        iconColor: Theme.of(context).colorScheme.error,
       );
 
   static void showInfo(
     BuildContext context, {
     IconData icon = Icons.info_rounded,
-    String? title,
-    String? message,
+    String text = 'Информация',
   }) =>
       _show(
         context: context,
+        text: text,
         icon: icon,
-        title: title ?? 'Информация',
-        message: message,
       );
 
   static void _show({
     required BuildContext context,
+    required String text,
     required IconData icon,
     Color? iconColor,
-    required String title,
-    String? message,
   }) {
     late OverlayEntry entry;
     final overlay = Overlay.of(context);
@@ -66,15 +64,14 @@ class InsightSnackBar {
           child: Material(
             color: Colors.transparent,
             child: _CustomSnackBarWidget(
+              text: text,
               icon: icon,
               iconColor: iconColor,
-              title: title,
-              message: message,
               removeOverlayEntry: () {
-                _entries.remove(_entries.first);
+                _entries.remove(entry);
                 entry.remove();
                 if (_entries.isNotEmpty) {
-                  overlay.insert(_entries.first);
+                  overlay.insert(_entries.last);
                 }
               },
             ),
@@ -95,17 +92,15 @@ class InsightSnackBar {
 class _CustomSnackBarWidget extends StatefulWidget {
   /// {@macro toast_notification}
   const _CustomSnackBarWidget({
+    required this.text,
     required this.icon,
     this.iconColor,
-    required this.title,
-    this.message,
     required this.removeOverlayEntry,
   });
 
   final IconData icon;
   final Color? iconColor;
-  final String title;
-  final String? message;
+  final String text;
   final VoidCallback removeOverlayEntry;
 
   @override
@@ -116,6 +111,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;
+  bool isClosing = false;
 
   @override
   void initState() {
@@ -134,7 +130,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   }
 
   void _statusListener(AnimationStatus status) {
-    if (status == AnimationStatus.completed) {
+    if (status == AnimationStatus.completed && !isClosing) {
       Future.delayed(
         const Duration(seconds: 2),
         close,
@@ -143,6 +139,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   }
 
   Future<void> close() async {
+    isClosing = true;
     await _controller.reverse();
     widget.removeOverlayEntry();
   }
@@ -162,40 +159,31 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
             color: Theme.of(context).colorScheme.surfaceVariant,
           ),
           padding: const EdgeInsets.symmetric(
-            vertical: 5,
+            vertical: 4,
             horizontal: 16,
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Icon(
                 widget.icon,
                 size: 32,
                 color: widget.iconColor,
               ),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.title,
-                      textAlign: TextAlign.center,
-                    ),
-                    if (widget.message != null)
-                      Text(
-                        widget.message!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                  ],
-                ),
+              const SizedBox(width: 16),
+              Text(
+                widget.text,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(width: 5),
+              const Spacer(),
               IconButton(
-                iconSize: 32,
-                icon: const Icon(Icons.close),
+                iconSize: 24,
+                icon: Icon(
+                  isNeedCupertino ? CupertinoIcons.xmark : Icons.close,
+                ),
                 onPressed: close,
               ),
             ],
