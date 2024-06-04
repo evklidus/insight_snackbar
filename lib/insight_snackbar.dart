@@ -2,19 +2,21 @@ library insight_snackbar;
 
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 final isNeedCupertino = Platform.isIOS || Platform.isMacOS;
 
 class InsightSnackBar {
-  const InsightSnackBar._();
+  InsightSnackBar._();
 
   static final List<OverlayEntry> _entries = [];
 
+  static bool hideIcon = false;
+
   static void showSuccessful(
     BuildContext context, {
-    IconData icon = Icons.done_rounded,
+    IconData? icon = Icons.done_rounded,
+    // Пример: "Вы успешно авторизировались"
     String text = 'Успешно',
   }) =>
       _show(
@@ -25,8 +27,9 @@ class InsightSnackBar {
 
   static void showError(
     BuildContext context, {
-    IconData icon = Icons.error_rounded,
-    String text = 'Ошибка',
+    IconData? icon = Icons.error_rounded,
+    // Пример: "Произошли проблемы с загрузкой фото, попробуйте позже"
+    String text = 'Произошли проблемы с загрузкой фото, попробуйте позже',
   }) =>
       _show(
         context: context,
@@ -37,7 +40,7 @@ class InsightSnackBar {
 
   static void showInfo(
     BuildContext context, {
-    IconData icon = Icons.info_rounded,
+    IconData? icon = Icons.info_rounded,
     String text = 'Информация',
   }) =>
       _show(
@@ -49,7 +52,7 @@ class InsightSnackBar {
   static void _show({
     required BuildContext context,
     required String text,
-    required IconData icon,
+    required IconData? icon,
     Color? iconColor,
   }) {
     late OverlayEntry entry;
@@ -98,7 +101,7 @@ class _CustomSnackBarWidget extends StatefulWidget {
     required this.removeOverlayEntry,
   });
 
-  final IconData icon;
+  final IconData? icon;
   final Color? iconColor;
   final String text;
   final VoidCallback removeOverlayEntry;
@@ -111,7 +114,6 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;
-  bool isClosing = false;
 
   @override
   void initState() {
@@ -130,7 +132,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   }
 
   void _statusListener(AnimationStatus status) {
-    if (status == AnimationStatus.completed && !isClosing) {
+    if (status == AnimationStatus.completed) {
       Future.delayed(
         const Duration(seconds: 2),
         close,
@@ -139,8 +141,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   }
 
   Future<void> close() async {
-    isClosing = true;
-    await _controller.reverse();
+    await _controller.reverse(from: 0.25);
     widget.removeOverlayEntry();
   }
 
@@ -154,37 +155,35 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   Widget build(BuildContext context) => FadeTransition(
         opacity: _animation,
         child: Container(
+          height: MediaQuery.sizeOf(context).height / 16,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           padding: const EdgeInsets.symmetric(
             vertical: 4,
-            horizontal: 16,
+            horizontal: 12,
           ),
           child: Row(
             children: [
-              Icon(
-                widget.icon,
-                size: 32,
-                color: widget.iconColor,
-              ),
-              const SizedBox(width: 16),
-              Text(
-                widget.text,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(),
-              IconButton(
-                iconSize: 24,
-                icon: Icon(
-                  isNeedCupertino ? CupertinoIcons.xmark : Icons.close,
+              if (widget.icon != null && !InsightSnackBar.hideIcon)
+                Icon(
+                  widget.icon,
+                  size: 32,
+                  color: widget.iconColor,
                 ),
-                onPressed: close,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  widget.text,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.start,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
