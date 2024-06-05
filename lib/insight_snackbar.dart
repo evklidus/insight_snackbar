@@ -1,10 +1,6 @@
 library insight_snackbar;
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-
-final isNeedCupertino = Platform.isIOS || Platform.isMacOS;
 
 class InsightSnackBar {
   InsightSnackBar._();
