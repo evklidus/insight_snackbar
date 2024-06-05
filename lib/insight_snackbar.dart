@@ -11,13 +11,14 @@ class InsightSnackBar {
 
   static final List<OverlayEntry> _entries = [];
 
+  /// Variable for hide/show icon in snackbar near text
   static bool hideIcon = false;
 
   static void showSuccessful(
     BuildContext context, {
     IconData? icon = Icons.done_rounded,
-    // Пример: "Вы успешно авторизировались"
-    String text = 'Успешно',
+    // Example: "You have successfully logged in"
+    String text = 'Successful',
   }) =>
       _show(
         context: context,
@@ -28,8 +29,9 @@ class InsightSnackBar {
   static void showError(
     BuildContext context, {
     IconData? icon = Icons.error_rounded,
-    // Пример: "Произошли проблемы с загрузкой фото, попробуйте позже"
-    String text = 'Произошли проблемы с загрузкой фото, попробуйте позже',
+    // Example: "There were problems with loading photos, please try again later"
+    String text =
+        'There were problems with loading photos, please try again later',
   }) =>
       _show(
         context: context,
@@ -41,7 +43,7 @@ class InsightSnackBar {
   static void showInfo(
     BuildContext context, {
     IconData? icon = Icons.info_rounded,
-    String text = 'Информация',
+    String text = 'Information',
   }) =>
       _show(
         context: context,
