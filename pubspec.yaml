@@ -1,6 +1,7 @@
 name: insight_snackbar
-description: "A new Flutter package project."
-version: 0.0.1
+description: "The best SnackBar"
+version: 1.0.0
+homepage: https://github.com/evklidus/insight_snackbar
 
 environment:
   sdk: ">=3.3.3 <4.0.0"
