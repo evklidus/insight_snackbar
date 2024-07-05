@@ -2,10 +2,26 @@ library insight_snackbar;
 
 import 'package:flutter/material.dart';
 
+class CustomOverlayEntry extends OverlayEntry {
+  CustomOverlayEntry({
+    required this.customHash,
+    required super.builder,
+  });
+
+  final int customHash;
+
+  @override
+  bool operator ==(Object other) =>
+      other.hashCode == customHash && other is CustomOverlayEntry;
+
+  @override
+  int get hashCode => customHash;
+}
+
 class InsightSnackBar {
   InsightSnackBar._();
 
-  static final List<OverlayEntry> _entries = [];
+  static final Set<OverlayEntry> _entries = {};
 
   /// Variable for hide/show icon in snackbar near text
   static bool hideIcon = false;
@@ -53,13 +69,19 @@ class InsightSnackBar {
     required IconData? icon,
     Color? iconColor,
   }) {
-    late OverlayEntry entry;
     final overlay = Overlay.of(context);
-    entry = OverlayEntry(
+    late OverlayEntry entry;
+    final overlayHash = Object.hash(text, icon, iconColor);
+
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPosition =
+        mediaQuery.viewInsets.bottom + mediaQuery.viewPadding.bottom + 16;
+
+    entry = CustomOverlayEntry(
+      customHash: overlayHash,
       builder: (context) {
-        final bottomInset = MediaQuery.of(context).viewPadding.bottom;
         return Positioned(
-          bottom: bottomInset,
+          bottom: bottomPosition,
           right: 16,
           left: 16,
           child: Material(
@@ -72,7 +94,7 @@ class InsightSnackBar {
                 _entries.remove(entry);
                 entry.remove();
                 if (_entries.isNotEmpty) {
-                  overlay.insert(_entries.last);
+                  overlay.insert(_entries.first);
                 }
               },
             ),
@@ -83,7 +105,7 @@ class InsightSnackBar {
     if (_entries.isEmpty) {
       overlay.insert(entry);
     }
-    _entries.insert(0, entry);
+    _entries.add(entry);
   }
 }
 
