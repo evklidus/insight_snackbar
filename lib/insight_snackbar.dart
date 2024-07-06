@@ -2,24 +2,48 @@ library insight_snackbar;
 
 import 'package:flutter/material.dart';
 
+class InsightSnackBarConfiguration {
+  const InsightSnackBarConfiguration({
+    this.hideIcon = false,
+    this.customBackgroundColor,
+    this.allowIdenticals = false,
+    this.entriesLimit = 3,
+  });
+
+  /// Need for hide/show [Icon] in snackbar near text
+  final bool hideIcon;
+
+  /// By default is [surfaceContainerHighest]
+  final Color? customBackgroundColor;
+
+  /// Does not allow the same snackbars
+  final bool allowIdenticals;
+
+  /// Limiting number of snackbars
+  final int entriesLimit;
+}
+
 class InsightSnackBar {
   InsightSnackBar._();
 
-  static final List<OverlayEntry> _entries = [];
+  static final Set<OverlayEntry> _entries = {};
 
   /// Variable for hide/show icon in snackbar near text
-  static bool hideIcon = false;
+  static InsightSnackBarConfiguration config =
+      const InsightSnackBarConfiguration();
 
   static void showSuccessful(
     BuildContext context, {
     IconData? icon = Icons.done_rounded,
     // Example: "You have successfully logged in"
     String text = 'Successful',
+    int? bottomPadding,
   }) =>
       _show(
         context: context,
         text: text,
         icon: icon,
+        bottomPadding: bottomPadding,
       );
 
   static void showError(
@@ -28,51 +52,70 @@ class InsightSnackBar {
     // Example: "There were problems with loading photos, please try again later"
     String text =
         'There were problems with loading photos, please try again later',
+    int? bottomPadding,
   }) =>
       _show(
         context: context,
         text: text,
         icon: icon,
         iconColor: Theme.of(context).colorScheme.error,
+        bottomPadding: bottomPadding,
       );
 
   static void showInfo(
     BuildContext context, {
     IconData? icon = Icons.info_rounded,
     String text = 'Information',
+    int? bottomPadding,
   }) =>
       _show(
         context: context,
         text: text,
         icon: icon,
+        bottomPadding: bottomPadding,
       );
 
   static void _show({
     required BuildContext context,
     required String text,
     required IconData? icon,
+    required int? bottomPadding,
     Color? iconColor,
   }) {
-    late OverlayEntry entry;
     final overlay = Overlay.of(context);
-    entry = OverlayEntry(
+    late OverlayEntry entry;
+    final overlayHash = Object.hash(
+      text,
+      icon,
+      bottomPadding,
+      iconColor,
+    );
+
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPosition = mediaQuery.viewInsets.bottom +
+        mediaQuery.viewPadding.bottom +
+        (bottomPadding ?? 0) +
+        8;
+
+    entry = _CustomOverlayEntry(
+      customHash: config.allowIdenticals ? null : overlayHash,
       builder: (context) {
-        final bottomInset = MediaQuery.of(context).viewPadding.bottom;
         return Positioned(
-          bottom: bottomInset,
+          bottom: bottomPosition,
           right: 16,
           left: 16,
-          child: Material(
+          child: ColoredBox(
             color: Colors.transparent,
             child: _CustomSnackBarWidget(
               text: text,
               icon: icon,
               iconColor: iconColor,
+              backgroundColor: config.customBackgroundColor,
               removeOverlayEntry: () {
                 _entries.remove(entry);
                 entry.remove();
                 if (_entries.isNotEmpty) {
-                  overlay.insert(_entries.last);
+                  overlay.insert(_entries.first);
                 }
               },
             ),
@@ -83,8 +126,26 @@ class InsightSnackBar {
     if (_entries.isEmpty) {
       overlay.insert(entry);
     }
-    _entries.insert(0, entry);
+    if (_entries.length < config.entriesLimit) {
+      _entries.add(entry);
+    }
   }
+}
+
+class _CustomOverlayEntry extends OverlayEntry {
+  _CustomOverlayEntry({
+    required this.customHash,
+    required super.builder,
+  });
+
+  final int? customHash;
+
+  @override
+  bool operator ==(Object other) =>
+      other.hashCode == hashCode && other is _CustomOverlayEntry;
+
+  @override
+  int get hashCode => customHash ?? super.hashCode;
 }
 
 /// {@template toast_notification}
@@ -96,12 +157,14 @@ class _CustomSnackBarWidget extends StatefulWidget {
     required this.text,
     required this.icon,
     this.iconColor,
+    required this.backgroundColor,
     required this.removeOverlayEntry,
   });
 
-  final IconData? icon;
-  final Color? iconColor;
   final String text;
+  final IconData? icon;
+  final Color? backgroundColor;
+  final Color? iconColor;
   final VoidCallback removeOverlayEntry;
 
   @override
@@ -153,10 +216,11 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
   Widget build(BuildContext context) => FadeTransition(
         opacity: _animation,
         child: Container(
-          height: MediaQuery.sizeOf(context).height / 16,
+          height: MediaQuery.sizeOf(context).shortestSide / 8,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: widget.backgroundColor ??
+                Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           padding: const EdgeInsets.symmetric(
             vertical: 4,
@@ -164,7 +228,7 @@ class __CustomSnackBarWidgetState extends State<_CustomSnackBarWidget>
           ),
           child: Row(
             children: [
-              if (widget.icon != null && !InsightSnackBar.hideIcon)
+              if (widget.icon != null && !InsightSnackBar.config.hideIcon)
                 Icon(
                   widget.icon,
                   size: 32,
