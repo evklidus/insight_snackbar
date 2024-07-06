@@ -95,7 +95,7 @@ class InsightSnackBar {
     final bottomPosition = mediaQuery.viewInsets.bottom +
         mediaQuery.viewPadding.bottom +
         (bottomPadding ?? 0) +
-        16;
+        8;
 
     entry = _CustomOverlayEntry(
       customHash: config.allowIdenticals ? null : overlayHash,
