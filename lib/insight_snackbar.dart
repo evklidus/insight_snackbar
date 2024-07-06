@@ -6,7 +6,7 @@ class InsightSnackBarConfiguration {
   const InsightSnackBarConfiguration({
     this.hideIcon = false,
     this.customBackgroundColor,
-    this.allowIdenticals = true,
+    this.allowIdenticals = false,
     this.entriesLimit = 3,
   });
 
